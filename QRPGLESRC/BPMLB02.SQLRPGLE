@@ -1,3 +1,4 @@
+**FREE
        //* ----------------------------------------------------------------- *//
        //* After creating the POPUOM table and the BPDLB01 display file!     *//
        //* To create the module BPMLB02:                                     *//
@@ -6,15 +7,18 @@
        //* ----------------------------------------------------------------- *//
        Ctl-Opt DFTNAME(BPMLB02) NOMAIN
                Debug
-               Option(*NoDebugIO: *SrcStmt)
-               COPYRIGHT('SHandB, LLC 2017/2024');
+               Option(*NoDebugIO: *SrcStmt: *NoUnref)
+               COPYRIGHT('SHandB, LLC 2025/2032');
        //  Boiler Plate List Box
        Dcl-F BPDLB02  WORKSTN SFILE(SFL01:XRRNS1) USROPN;
        //  Prototypes
-      /Copy QRPGLESRC,BPT001
-       Dcl-PR CloseLB2  End-PR ;
-       Dcl-PR FetchMultLB2 Ind End-PR;
-       Dcl-PR OpenLB2 End-PR ;
+       //Copy QRPGLESRC,BPT001
+       //====  BPMLB02 - Simple List Box w/Position To  ====
+       Dcl-PR BPMLB02    Char(11) End-PR;
+       Dcl-DS BPMLB02DS;
+         LB02NDX         Zoned(9);
+         LB02EOJ         Char(2) Pos(10);
+       End-DS;
        // Program data
        Dcl-DS PgmData                  qualified  Dim(50) ;
           PUOMIndex               Zoned(9:0) Inz;
@@ -29,16 +33,16 @@
        Dcl-S O                      Int(5:0);
        Dcl-S P                      Int(5:0);
        Dcl-S S                      Int(5:0);
-       Dcl-S Sf1Last                Int(5:0);
-       Dcl-S SflPg                  Int(5:0) inz(5);
-       Dcl-S SflPgx2                Int(5:0) inz(10);
-       Dcl-S Sfl1B                  Int(5:0) inz;
-       Dcl-S Sfl1T                  Int(5:0) inz;
-       Dcl-S Sfl1Ind                Ind;
+       Dcl-S SFL01P                 Int(5:0);
+       Dcl-S SFL01Pg                Int(5:0) inz(5);
+       Dcl-S SFL01Pgx2              Int(5:0) inz(10);
+       Dcl-S SFL01B                 Int(5:0) inz;
+       Dcl-S SFL01T                 Int(5:0) inz;
+       Dcl-S SFL01Ind               Ind;
        Dcl-S Tot_Read               Int(10:0) Inz;
        // ---------------------------------------------------------------------
        Dcl-Proc BPMLB02 EXPORT;
-
+         //
          Dcl-PI BPMLB02              Char(11);
          End-PI;
          //  Stand Alone Fields
@@ -47,175 +51,141 @@
          Dcl-S OpenUOM                Ind;
          Dcl-S Rc                     Ind  Inz('0') ;
          // ---------------------------------------------------------------------
-            If NOT %Open(BPDLB02);
-               Open BPDLB02;
-            EndIf;
-            // Set the SQL cursor
-            Exsr CrtCursor;
-            // Open the SQL Cursor
-            CallP OpenLB2();
-            // Get the UOM Data
-            Rc = FetchMultLB2();
-            // Close the SQL Cursor
-            CallP CloseLB2();
-            If Tot_Read > *Zero;
-              P = *Zero;
-              Exsr LoadSF1;
-              //
-              SFL1ind = *ON;
-              //
-              DoW SFL1Ind = *ON;
-                // Start at the top of the list
-                XRRNS1 = 1;
-                // Display the subfile
-                Write WIN01;
-                *IN27 = *ON;
-                *IN28 = *ON;
-                Exfmt CTL01;
-                *IN28 = *OFF;
-                *IN27 = *OFF;
-                Select;
-                     // If previous was selected
-                  When *IN12 = *ON;
-                     EOJ = '12';
-                     SFL1ind = *OFF;
-                     // Execute roll up (page down)
-                  When *IN26 = *ON;
-                     If P < Tot_Read;
-                        Exsr LoadSF1;
-                     EndIf;
-                     // Execute roll down (page up)
-                  When *IN25 = *ON;
-                     If SF1Last > SFLPg;
-                        If SF1Last > SFLpgX2;
-                           P = P - SflPgX2 ;
-                           Exsr LoadSF1;
-                           Else;   //* Go to the top
-                           P = *Zero;
-                           Exsr LoadSF1;
-                        EndIf;
+         GetData();
+         If Tot_Read > *Zero;
+           If NOT %Open(BPDLB02);
+             Open BPDLB02;
+           EndIf;
+           P = *Zero;
+           LoadSFL01();
+           //
+           SFL01ind = *ON;
+           //
+           DoW SFL01Ind = *ON;
+             // Start at the top of the list
+             XRRNS1 = 1;
+             // Display the subfile
+             Write WIN01;
+             *IN27 = *ON;
+             *IN28 = *ON;
+             Exfmt CTL01;
+             *IN28 = *OFF;
+             *IN27 = *OFF;
+             Select;
+               // If previous was selected
+               When *IN12 = *ON;
+                  EOJ = '12';
+                  SFL01ind = *OFF;
+                  // Execute roll up (page down)
+               When *IN26 = *ON;
+                  If P < Tot_Read;
+                     LoadSFL01();
+                  EndIf;
+                  // Execute roll down (page up)
+               When *IN25 = *ON;
+                  Select;
+                    When *IN30 = *ON;
+                      P = P - (SFL01Pg + SFL01B);
+                      LoadSFL01();
+                    When SFL01P > SFL01Pg;
+                     If SFL01P > SFL01PgX2;
+                        P = P - SFL01PgX2 ;
+                        LoadSFL01();
                         Else;   //* Go to the top
                         P = *Zero;
-                        Exsr LoadSF1;
+                        LoadSFL01();
                      EndIf;
-                  When PositionTo <> *BLanks;
-                    For S = 1 to Tot_Read;
-                      If PgmData(S).UOMID >= PositionTo ;
-                        P = S - 1;
-                        ExSR LoadSF1 ;
-                        PositionTo = *Blanks ;
-                        Leave;
-                      EndIf;
-                    EndFor;
-                  When RELREC <> *Zero;
-                     Chain RELREC SFL01;
-                     If %Found() and SF1H01 > *Zero and SF1SEL <> *Blank;
-                        EOJ = '**' ;
-                        NDXUOM = SF1H01;
-                        SFL1ind = *OFF;
-                        If SF1SEL <> *Blank;
-                           Clear SF1SEL;
-                           Update SFL01;
-                        EndIf;
-                     EndIf;
-               EndSl;
-             EndDo;
-           EndIf;
-           // Close the display file
+                   Other;   //* Go to the top
+                     P = *Zero;
+                     LoadSFL01();
+                  EndSl;
+               When PositionTo <> *BLanks;
+                 For S = 1 to Tot_Read;
+                   If PgmData(S).UOMID >= PositionTo ;
+                     P = S - 1;
+                     LoadSFL01() ;
+                     PositionTo = *Blanks ;
+                     Leave;
+                   EndIf;
+                 EndFor;
+               When RELREC <> *Zero;
+                 Chain RELREC SFL01;
+                 If %Found() and SF1H01 > *Zero and SF1SEL <> *Blank;
+                   EOJ = '**' ;
+                   NDXUOM = SF1H01;
+                   SFL01ind = *OFF;
+                   If SF1SEL <> *Blank;
+                     Clear SF1SEL;
+                     Update SFL01;
+                   EndIf;
+                 EndIf;
+            EndSl;
+          EndDo;
+         EndIf;
+         // Close the display file
+         If %Open(BPDLB02);
            Close BPDLB02;
-
-           If EOJ <> '**' ;
-              LB02NDX = *Zeros;
-           Else;
-              LB02NDX = NDXUOM;
-           EndIf;
-           LB02EOJ = EOJ;
-
-          Return BPMLB02DS;
-          //*----------------------------------------------------------
-          // Load the subfile
-          //*----------------------------------------------------------
-       BegSr LoadSF1;
-          // Clear out the subfile
-          *IN29 = *ON;
-          Write CTL01;
-          *IN29 = *OFF;
-          XRRNS1 = *ZERO;
-          // Build the window subfile
-          If P < Tot_Read;
-             For O = 1 to SFlPg ;
+         EndIf;
+         If EOJ <> '**' ;
+           LB02NDX = *Zeros;
+         Else;
+           LB02NDX = NDXUOM;
+         EndIf;
+         LB02EOJ = EOJ;
+         Return BPMLB02DS;
+         End-Proc BPMLB02;
+         //*----------------------------------------------------------
+         // Load the subfile
+         //*----------------------------------------------------------
+         Dcl-Proc LoadSFL01;
+            // Clear out the subfile
+            *IN29 = *ON;
+            Write CTL01;
+            *IN29 = *OFF;
+            XRRNS1 = *ZERO;
+            // Build the window subfile
+            For O = 1 to SFL01Pg ;
+              If P < Tot_Read;
                 P += 1;
                 If PgmData(P).PUOMIndex <> *Zeros;
-                   SF1H01 = PgmData(P).PUOMIndex;
-                   SF1UOM = PgmData(P).UOMID ;
-                   SF1DSC = PgmData(P).UOMDESC ;
-                   XRRNS1 += 1;
-                   If XRRNS1 = 1;
-                      SFL1T = P;
-                   EndIf;
-                   SFL1B = P;
-                   Write SFL01 ;
+                  SF1H01 = PgmData(P).PUOMIndex;
+                  SF1UOM = PgmData(P).UOMID ;
+                  SF1DSC = PgmData(P).UOMDESC ;
+                  XRRNS1 += 1;
+                  Write SFL01 ;
+                  SFL01B = O;
+                  SFL01P = P;
                 EndIf;
-             EndFor;
-          EndIf;
-
-       EndSr;
+              EndIf;
+            EndFor;
+           //
+           If SFL01P >= Tot_Read;
+             *IN30 = *ON;
+           Else; 
+             *IN30 = *OFF;
+           EndIf;
+        End-Proc LoadSFL01;
         //*--------------------------------------------------------
-        // Crtcursor - Create the SQL cursor
+        // GetData - Get the Data 
         //*--------------------------------------------------------
-       BegSr crtcursor;
+        Dcl-Proc GetData;
           //
           CsrSel = 'Select PUOMINDEX, UOMID, UOMDESC ' +
                    'From POPUOM ' +
                    'Order By UOMID ' +
                    'For Read Only' ;
           //
-       EndSr;
-       //*****************************************************
-       End-Proc;
-       //--------------------------------------------------------
-       //  closeLB2 - Close the cursor
-       //--------------------------------------------------------
-       Dcl-Proc closeLB2;
-         Dcl-PI closeLB2;
-         End-PI;
-
-         Exec SQL close Cursor;
-
-       End-Proc closeLB2;
-       //--------------------------------------------------------
-       //  fetchMultLB2 - read the entire table
-       //--------------------------------------------------------
-       Dcl-Proc fetchMultLB2;
-
-         Dcl-PI fetchMultLB2 Ind End-PI;
-
-         Exec SQL
-             fetch next from Cursor
-             For :Mult_Row rows
-             into :PgmData;
-         //
-         Exec SQL Get Diagnostics :Tot_Read = ROW_COUNT ;
-         //
-         If SQLSTT < '020000';
-            Return *ON;
-         Else;
-            Return *OFF;
-         EndIf;
-            //
-       End-Proc fetchMultLB2;
-       //---------------------------------------------------------------------
-       //  openCustLB2  - Open a cursor for the selected table
-       //---------------------------------------------------------------------
-       Dcl-Proc openLB2;
-
-         Dcl-PI OpenLB2 End-PI;
-
-            Exec SQL prepare wkStatement from :CsrSel ;
-            // *
-            Exec SQL declare Cursor scroll cursor for wkStatement ;
-            // *
-            Exec SQL open Cursor ;
-            // *
-       End-Proc openLB2;
-       //---------------------------------------------------------------------
+          Exec SQL prepare wkStatement from :CsrSel ;
+          // *
+          Exec SQL declare CsrBP02 cursor for wkStatement ;
+          // *
+          Exec SQL open CsrBP02 ;
+          // *
+          Exec SQL fetch next from CsrBP02 For :Mult_Row rows into :PgmData;
+          //
+          Exec SQL Get Diagnostics :Tot_Read = ROW_COUNT ;
+          //
+          Exec SQL close CsrBP02;
+          //
+      End-Proc GetData;
+      //-----------------------------------------------------------------

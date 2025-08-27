@@ -1,3 +1,4 @@
+**FREE
        //* ----------------------------------------------------------------- *//
        //* To create the module BPMTST03:                                    *//
        //* CRTRPGMOD MODULE(BPLIB/BPMTST03) DBGVIEW(*SOURCE)                 *//
@@ -11,7 +12,7 @@
        CTL-OPT CCSID(*CHAR:*JOBRUN) ALWNULL(*USRCTL);
        CTL-OPT COPYRIGHT('SHandB, LLC 2017/1024');
       // Test Boiler Plate List Box 03
-     D/Copy QRPGLESRC,BPT001
+      /Copy QRPGLESRC,BPT001
        Dcl-S  EOJ        Char(2) ;
        BPMLB03DS = BPMLB03();
        *INLR = *ON ;

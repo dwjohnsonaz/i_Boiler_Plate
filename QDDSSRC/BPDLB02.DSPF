@@ -35,6 +35,7 @@
      A  27                                  SFLDSP
      A  28                                  SFLDSPCTL
      A  29                                  SFLCLR
+     A  30                                  SFLEND(*MORE)
      A            RELREC         5S 0H
      A                                  1  1'List Box Heading Goes Here '
      A                                      DSPATR(HI)
@@ -44,11 +45,11 @@
      A                                  3 11'Description'
      A          R WIN01
      A*%%TS  SD  20180215  110027  DICKJAZ     REL-V7R2M0  5770-WDS
-     A  *DS3                                WINDOW(9 24 9 27 *NOMSGLIN)
-     A  *DS4                                WINDOW(9 24 9 27 *NOMSGLIN)
+     A  *DS3                                WINDOW(9 24 10 27 *NOMSGLIN)
+     A  *DS4                                WINDOW(9 24 10 27 *NOMSGLIN)
      A                                      WDWBORDER((*DSPATR RI) (*CHAR '    -
      A                                          '))
-     A                                  9  1'F12=Previous'
+     A                                 10  1'F12=Previous'
      A                                      COLOR(BLU)
      A          R DUMMY                     ASSUME
      A                                  1  2' '

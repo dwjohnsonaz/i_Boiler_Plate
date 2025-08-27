@@ -11,6 +11,7 @@
      A            XRRNS1         3S 0H
      A            SF1H01    R        H      REFFLD(POPUOM/PUOMINDEX *LIBL/POPUO-
      A                                      M)
+     A            SF1POS         5S 0H
      A            SF1SEL         1A  B  4  3DSPATR(HI)
      A                                      DSPATR(UL)
      A            SF1UOM    R        O  4  6REFFLD(POPUOM/UOMID *LIBL/POPUOM)
@@ -34,6 +35,7 @@
      A  27                                  SFLDSP
      A  28                                  SFLDSPCTL
      A  29                                  SFLCLR
+     A  30                                  SFLEND(*MORE)
      A            RELREC         5S 0H
      A                                  1  1'List Box Heading Goes Here '
      A                                      DSPATR(HI)
@@ -42,13 +44,13 @@
      A            POSITIONTO     3   B  3  6DSPATR(CS)
      A                                  3 11'Description'
      A          R WIN01
-     A  *DS3                                WINDOW(9 24 9 27 *NOMSGLIN)
-     A  *DS4                                WINDOW(9 24 9 27 *NOMSGLIN)
+     A  *DS3                                WINDOW(9 24 10 27 *NOMSGLIN)
+     A  *DS4                                WINDOW(9 24 10 27 *NOMSGLIN)
      A                                      WDWBORDER((*DSPATR RI) (*CHAR '    -
      A                                          '))
-     A                                  9  1'F5=Update'
+     A                                 10  1'F5=Update'
      A                                      COLOR(BLU)
-     A                                  9 12'F12=Previous'
+     A                                 10 12'F12=Previous'
      A                                      COLOR(BLU)
      A          R DUMMY                     ASSUME
      A                                  1  2' '
